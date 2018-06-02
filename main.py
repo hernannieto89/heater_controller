@@ -71,10 +71,9 @@ def main():
                 temperature = 99
                 humidity = 99
 
-            if temperature < 20:
+            if temperature < 18:
                 work(pin_heater, work_time)
-            else:
-                time.sleep(sleep_time)
+            time.sleep(sleep_time)
 
     # Reset GPIO settings
     # teardown()
