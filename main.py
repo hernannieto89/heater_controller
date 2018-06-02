@@ -13,13 +13,13 @@ def main():
     """
     check_sudo()
     parser = argparse.ArgumentParser(description='Heater Controller..')
-    parser.add_argument('--pin-heater',
+    parser.add_argument('--pin_heater',
                         action='store',
-                        dest='pin-heater',
+                        dest='pin_heater',
                         type=int,
                         required=True,
                         help='raspberry pins GPIO.BCM mode for heater')
-    parser.add_argument('--pin-dht',
+    parser.add_argument('--pin_dht',
                         action='store',
                         dest='pin_dht',
                         type=int,
