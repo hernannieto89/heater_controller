@@ -4,7 +4,7 @@ Heater Controller - Main module.
 """
 import argparse
 import time
-from helpers import check_sudo, setup_sensor, get_ht, setup_controller, work
+from helpers import check_sudo, setup_sensor, get_ht, setup_controller, work, got_to_work
 
 
 def main():
@@ -37,6 +37,18 @@ def main():
                         type=int,
                         required=True,
                         help='sleep time for job (in seconds)')
+    parser.add_argument('--start_time',
+                        action='store',
+                        dest='start_time',
+                        type=int,
+                        required=True,
+                        help='start time for timer (between 0 and 23)')
+    parser.add_argument('--end_time',
+                        action='store',
+                        dest='end_time',
+                        type=int,
+                        required=True,
+                        help='end time for timer (between 0 and 23)')
 
     args = parser.parse_args()
     # sanitizes args
@@ -44,21 +56,25 @@ def main():
     pin_heater = args.pin_heater
     work_time = args.work_time
     sleep_time = args.sleep_time
+    start = args.start_time
+    end = args.end_time
     # setup GPIO
     sensor = setup_sensor(pin_dht)
     setup_controller(pin_heater)
 
     while True:
-        try:
-            humidity, temperature = get_ht(sensor, pin_dht)
-        except Exception:
-            temperature = -1
-            humidity = -1
+        on_time = got_to_work(start, end)
+        if on_time:
+            try:
+                humidity, temperature = get_ht(sensor, pin_dht)
+            except Exception:
+                temperature = 99
+                humidity = 99
 
-        if temperature < 20:
-            work(pin_heater, work_time)
-        else:
-            time.sleep(sleep_time)
+            if temperature < 20:
+                work(pin_heater, work_time)
+            else:
+                time.sleep(sleep_time)
 
     # Reset GPIO settings
     # teardown()

@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import datetime
 
 import RPi.GPIO as GPIO
 import Adafruit_DHT
@@ -52,3 +53,21 @@ def work(pin, work_time):
     if GPIO.input(pin) != GPIO.HIGH:
         GPIO.setup(pin, GPIO.OUT)
         GPIO.output(pin, GPIO.HIGH)
+
+
+def got_to_work(start, end):
+    """
+    Ask if actual hour is within start - end range.
+    :param start:
+    :param end:
+    :return: Boolean
+    """
+    now = datetime.datetime.now()
+    now_time = now.time()
+    start_time = datetime.time(start)
+    end_time = datetime.time(end)
+
+    if start_time < end_time:
+        return now_time >= start_time and now_time <= end_time
+    # Over midnight
+    return now_time >= start_time or now_time <= end_time
