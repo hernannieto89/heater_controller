@@ -9,7 +9,7 @@ import Adafruit_DHT
 
 DELAY_INTERVAL = 5
 MAX_RETRIES = 5
-
+FILE_NAME = '/home/pi/heater_controller/stadistics.txt'
 
 def setup_sensor(pin):
     GPIO.setwarnings(False)
@@ -62,16 +62,16 @@ def work(pin_heater, work_time, sensor, pin_dht):
     GPIO.setup(pin_heater, GPIO.IN)
     if GPIO.input(pin_heater) != GPIO.LOW:
         GPIO.setup(pin_heater, GPIO.OUT)
+        GPIO.output(pin_heater, GPIO.LOW)
 
     humidity, temperature = get_ht(sensor, pin_dht)
 
     while counter < work_time:
         if humidity < 25 or temperature > 18:
             break
-        else:
-            humidity, temperature = get_ht(sensor, pin_dht)
-            counter += 10
-            time.sleep(10)
+        humidity, temperature = get_ht(sensor, pin_dht)
+        counter += 10
+        time.sleep(10)
 
     GPIO.setup(pin_heater, GPIO.IN)
     if GPIO.input(pin_heater) != GPIO.HIGH:
