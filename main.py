@@ -4,7 +4,7 @@ Heater Controller - Main module.
 """
 import argparse
 import time
-from helpers import check_sudo, setup_sensor, get_ht, setup_controller, work, got_to_work, has_to_work_temperature, has_to_stop_humidity
+from helpers import check_sudo, setup_sensor, get_ht, setup_controller, work, got_to_work
 
 
 def main():
@@ -66,8 +66,7 @@ def main():
         on_time = got_to_work(start, end)
         if on_time:
             humidity, temperature = get_ht(sensor, pin_dht)
-
-            if has_to_work_temperature(temperature, 18) and not has_to_stop_humidity(humidity, 25):
+            if temperature < 18 and humidity > 25:
                 work(pin_heater, work_time, sensor, pin_dht)
             time.sleep(sleep_time)
 

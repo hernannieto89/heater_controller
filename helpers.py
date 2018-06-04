@@ -42,7 +42,7 @@ def get_ht(sensor, pin):
         humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
         while out_of_range(humidity) or out_of_range(temperature):
             tries += 1
-            time.sleep(5)
+            time.sleep(DELAY_INTERVAL)
             humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
             if tries > MAX_RETRIES:
                 raise Exception
@@ -56,14 +56,6 @@ def out_of_range(value):
     return value < -20 or value > 100
 
 
-def has_to_work_temperature(temperature, limit):
-    return temperature < limit
-
-
-def has_to_stop_humidity(humidity, limit):
-    return humidity < limit
-
-
 def work(pin_heater, work_time, sensor, pin_dht):
     counter = 0
 
@@ -74,7 +66,7 @@ def work(pin_heater, work_time, sensor, pin_dht):
     humidity, temperature = get_ht(sensor, pin_dht)
 
     while counter < work_time:
-        if has_to_stop_humidity(humidity, 25) or not has_to_work_temperature(temperature, 18):
+        if humidity < 25 or temperature > 18:
             break
         else:
             humidity, temperature = get_ht(sensor, pin_dht)
