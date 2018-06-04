@@ -9,7 +9,7 @@ import Adafruit_DHT
 
 DELAY_INTERVAL = 5
 MAX_RETRIES = 5
-FILE_NAME = '/home/pi/heater_controller/stadistics.txt'
+FILE_NAME = '/home/pi/stadistics.txt'
 
 def setup_sensor(pin):
     GPIO.setwarnings(False)
@@ -41,19 +41,21 @@ def get_ht(sensor, pin):
     try:
         humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
         while out_of_range(humidity) or out_of_range(temperature):
+            register_to_disk(temperature, humidity, "Out of Range - Beginning try {0}".format(tries))
             tries += 1
             time.sleep(DELAY_INTERVAL)
             humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
             if tries > MAX_RETRIES:
                 raise Exception
     except Exception:
-        humidity = 101
-        temperature = 101
+        humidity = 101.
+        temperature = 101.
+        register_to_disk(temperature, humidity, "Exception reading.")
     return humidity, temperature
 
 
 def out_of_range(value):
-    return value < -20 or value > 100
+    return value > 100
 
 
 def work(pin_heater, work_time, sensor, pin_dht):
@@ -65,14 +67,16 @@ def work(pin_heater, work_time, sensor, pin_dht):
         GPIO.output(pin_heater, GPIO.LOW)
 
     humidity, temperature = get_ht(sensor, pin_dht)
-
+    register_to_disk(temperature, humidity, "Beginning to work.".format(counter))
     while counter < work_time:
         if humidity < 25 or temperature > 18:
             break
         humidity, temperature = get_ht(sensor, pin_dht)
         counter += 10
+        register_to_disk(temperature, humidity, "Working... Elapsed time: {0} seconds".format(counter))
         time.sleep(10)
 
+    register_to_disk(temperature, humidity, "Work finished. Beginning to rest.".format(counter))
     GPIO.setup(pin_heater, GPIO.IN)
     if GPIO.input(pin_heater) != GPIO.HIGH:
         GPIO.setup(pin_heater, GPIO.OUT)
@@ -95,3 +99,9 @@ def got_to_work(start, end):
         return now_time >= start_time and now_time <= end_time
     # Over midnight
     return now_time >= start_time or now_time <= end_time
+
+
+def register_to_disk(temperature, humidity, message):
+    with open(FILE_NAME, 'a') as the_file:
+        the_file.write(message + '\n')
+        the_file.write('Temp={0:0.1f}*  Humidity={1:0.1f}%\n'.format(temperature, humidity))
