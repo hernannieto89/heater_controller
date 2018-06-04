@@ -7,6 +7,10 @@ import RPi.GPIO as GPIO
 import Adafruit_DHT
 
 
+DELAY_INTERVAL = 5
+MAX_RETRIES = 5
+
+
 def setup_sensor(pin):
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
@@ -33,26 +37,54 @@ def check_sudo():
 
 
 def get_ht(sensor, pin):
-    humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
-    if humidity > 100 or temperature > 100:
-        time.sleep(3)
+    tries = 0
+    try:
         humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
-        if humidity > 100 or temperature > 100:
-            raise Exception
+        while out_of_range(humidity) or out_of_range(temperature):
+            tries += 1
+            time.sleep(5)
+            humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
+            if tries > MAX_RETRIES:
+                raise Exception
+    except Exception:
+        humidity = 101
+        temperature = 101
     return humidity, temperature
 
 
-def work(pin, work_time):
+def out_of_range(value):
+    return value < -20 or value > 100
 
-    GPIO.setup(pin, GPIO.IN)
-    if GPIO.input(pin) != GPIO.LOW:
-        GPIO.setup(pin, GPIO.OUT)
-        GPIO.output(pin, GPIO.LOW)
-    time.sleep(work_time)
-    GPIO.setup(pin, GPIO.IN)
-    if GPIO.input(pin) != GPIO.HIGH:
-        GPIO.setup(pin, GPIO.OUT)
-        GPIO.output(pin, GPIO.HIGH)
+
+def has_to_work_temperature(temperature, limit):
+    return temperature < limit
+
+
+def has_to_stop_humidity(humidity, limit):
+    return humidity < limit
+
+
+def work(pin_heater, work_time, sensor, pin_dht):
+    counter = 0
+
+    GPIO.setup(pin_heater, GPIO.IN)
+    if GPIO.input(pin_heater) != GPIO.LOW:
+        GPIO.setup(pin_heater, GPIO.OUT)
+
+    humidity, temperature = get_ht(sensor, pin_dht)
+
+    while counter < work_time:
+        if has_to_stop_humidity(humidity, 25) or not has_to_work_temperature(temperature, 18):
+            break
+        else:
+            humidity, temperature = get_ht(sensor, pin_dht)
+            counter += 10
+            time.sleep(10)
+
+    GPIO.setup(pin_heater, GPIO.IN)
+    if GPIO.input(pin_heater) != GPIO.HIGH:
+        GPIO.setup(pin_heater, GPIO.OUT)
+        GPIO.output(pin_heater, GPIO.HIGH)
 
 
 def got_to_work(start, end):
