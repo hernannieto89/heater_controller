@@ -58,7 +58,7 @@ def out_of_range(value):
     return value > 100
 
 
-def work(pin_heater, work_time, sensor, pin_dht):
+def work(pin_heater, work_time, sleep_time, sensor, pin_dht):
     counter = 0
 
     GPIO.setup(pin_heater, GPIO.IN)
@@ -67,21 +67,27 @@ def work(pin_heater, work_time, sensor, pin_dht):
         GPIO.output(pin_heater, GPIO.LOW)
 
     humidity, temperature = get_ht(sensor, pin_dht)
-    register_to_disk(temperature, humidity, "Beginning to work.".format(counter))
+    register_to_disk(temperature, humidity, "Beginning to work.")
     while counter < work_time:
         if humidity < 25 or temperature > 18:
             break
         humidity, temperature = get_ht(sensor, pin_dht)
-        counter += 10
+        counter += 30
         register_to_disk(temperature, humidity, "Working... Elapsed time: {0} seconds".format(counter))
-        time.sleep(10)
+        time.sleep(30)
 
-    register_to_disk(temperature, humidity, "Work finished. Beginning to rest.".format(counter))
+    register_to_disk(temperature, humidity, "Work finished. Beginning to rest. {}".format(datetime.datetime.now()))
     GPIO.setup(pin_heater, GPIO.IN)
     if GPIO.input(pin_heater) != GPIO.HIGH:
         GPIO.setup(pin_heater, GPIO.OUT)
         GPIO.output(pin_heater, GPIO.HIGH)
 
+    counter = 0
+    while counter < sleep_time:
+        counter += 150
+        time.sleep(150)
+        humidity, temperature = get_ht(sensor, pin_dht)
+        register_to_disk(temperature, humidity, "Resting... Elapsed time: {0} seconds. {1}".format(counter, datetime.datetime.now()))
 
 def got_to_work(start, end):
     """

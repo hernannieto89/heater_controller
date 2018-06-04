@@ -3,7 +3,7 @@
 Heater Controller - Main module.
 """
 import argparse
-import time
+import datetime
 from helpers import check_sudo, setup_sensor, get_ht, setup_controller, work, got_to_work, register_to_disk
 
 
@@ -66,10 +66,10 @@ def main():
         on_time = got_to_work(start, end)
         if on_time:
             humidity, temperature = get_ht(sensor, pin_dht)
-            register_to_disk(temperature, humidity, "Before work call.")
+            register_to_disk(temperature, humidity, "Before work. {}".format(datetime.datetime.now()))
             if temperature < 18 and humidity > 25:
-                work(pin_heater, work_time, sensor, pin_dht)
-            time.sleep(sleep_time)
+                work(pin_heater, work_time, sleep_time, sensor, pin_dht)
+
 
     # Reset GPIO settings
     # teardown()
