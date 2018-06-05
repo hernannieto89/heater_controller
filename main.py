@@ -67,7 +67,7 @@ def main():
         if on_time:
             humidity, temperature = get_ht(sensor, pin_dht)
             register_to_disk(temperature, humidity, "Before work. {}".format(datetime.datetime.now()))
-            if temperature < 18 and humidity > 25:
+            if temperature < 20 and humidity > 25:
                 work(pin_heater, work_time, sleep_time, sensor, pin_dht)
 
 

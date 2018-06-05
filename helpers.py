@@ -69,7 +69,7 @@ def work(pin_heater, work_time, sleep_time, sensor, pin_dht):
     humidity, temperature = get_ht(sensor, pin_dht)
     register_to_disk(temperature, humidity, "Beginning to work.")
     while counter < work_time:
-        if humidity < 25 or temperature > 18:
+        if humidity < 25 or temperature > 20:
             break
         humidity, temperature = get_ht(sensor, pin_dht)
         counter += 30
