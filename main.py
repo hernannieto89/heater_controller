@@ -49,7 +49,23 @@ def main():
                         type=int,
                         required=True,
                         help='end time for timer (between 0 and 23)')
-
+    parser.add_argument('--log_level',
+                        action='store',
+                        dest='log_level',
+                        type=str,
+                        required=True,
+                        choices=['NONE', 'INFO', 'DEBUG'],
+                        help='log level (choices: NONE, INFO or DEBUG)')
+    parser.add_argument('--temperature_limit',
+                        action='store',
+                        dest='temperature_limit',
+                        type=int,
+                        help='temperature limit')
+    parser.add_argument('--humidity_limit',
+                        action='store',
+                        dest='humidity_limit',
+                        type=int,
+                        help='humidity_limit')
     args = parser.parse_args()
     # sanitizes args
     pin_dht = args.pin_dht
@@ -58,6 +74,9 @@ def main():
     sleep_time = args.sleep_time
     start = args.start_time
     end = args.end_time
+    log_level = args.log_level
+    temperature_limit = args.temperature_limit
+    humidity_limit = args.humidity_limit
     # setup GPIO
     sensor = setup_sensor(pin_dht)
     setup_controller(pin_heater)
@@ -65,11 +84,24 @@ def main():
     while True:
         on_time = got_to_work(start, end)
         if on_time:
-            humidity, temperature = get_ht(sensor, pin_dht)
-            register_to_disk(temperature, humidity, "Before work. {}".format(datetime.datetime.now()))
-            if temperature < 20 and humidity > 25:
-                work(pin_heater, work_time, sleep_time, sensor, pin_dht)
-
+            humidity, temperature = get_ht(sensor, pin_dht, log_level)
+            register_to_disk(temperature, humidity, "Before work. {}".format(datetime.datetime.now()), log_level)
+            if temperature_limit and not humidity_limit:
+                if temperature < temperature_limit:
+                    work(pin_heater=pin_heater,
+                         work_time=work_time,
+                         sleep_time=sleep_time,
+                         sensor=sensor, pin_dht=pin_dht,
+                         log_level=log_level,
+                         temperature_limit=temperature_limit)
+            if humidity_limit:
+                if humidity < humidity_limit:
+                    work(pin_heater=pin_heater,
+                         work_time=work_time,
+                         sleep_time=sleep_time,
+                         sensor=sensor, pin_dht=pin_dht,
+                         log_level=log_level,
+                         humidity_limit=humidity_limit)
 
     # Reset GPIO settings
     # teardown()

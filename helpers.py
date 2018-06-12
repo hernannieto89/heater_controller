@@ -11,6 +11,7 @@ DELAY_INTERVAL = 5
 MAX_RETRIES = 5
 FILE_NAME = '/home/pi/stadistics.txt'
 
+
 def setup_sensor(pin):
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BCM)
@@ -36,12 +37,12 @@ def check_sudo():
         sys.exit(1)
 
 
-def get_ht(sensor, pin):
+def get_ht(sensor, pin, log_level):
     tries = 0
     try:
         humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
         while out_of_range(humidity) or out_of_range(temperature):
-            register_to_disk(temperature, humidity, "Out of Range - Beginning try {0}".format(tries))
+            register_to_disk(temperature, humidity, "Out of Range - Beginning try {0}".format(tries), log_level)
             tries += 1
             time.sleep(DELAY_INTERVAL)
             humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
@@ -50,7 +51,7 @@ def get_ht(sensor, pin):
     except Exception:
         humidity = 101.
         temperature = 101.
-        register_to_disk(temperature, humidity, "Exception reading.")
+        register_to_disk(temperature, humidity, "Exception reading.", log_level)
     return humidity, temperature
 
 
@@ -58,7 +59,7 @@ def out_of_range(value):
     return value > 100
 
 
-def work(pin_heater, work_time, sleep_time, sensor, pin_dht):
+def work(pin_heater, work_time, sleep_time, sensor, pin_dht, log_level, temperature_limit=None, humidity_limit=None):
     counter = 0
 
     GPIO.setup(pin_heater, GPIO.IN)
@@ -67,16 +68,19 @@ def work(pin_heater, work_time, sleep_time, sensor, pin_dht):
         GPIO.output(pin_heater, GPIO.LOW)
 
     humidity, temperature = get_ht(sensor, pin_dht)
-    register_to_disk(temperature, humidity, "Beginning to work.")
+    register_to_disk(temperature, humidity, "Beginning to work.", log_level)
     while counter < work_time:
-        if humidity < 25 or temperature > 20:
+        if temperature_limit and temperature > temperature_limit:
+            break
+        elif humidity_limit and humidity > humidity_limit:
             break
         humidity, temperature = get_ht(sensor, pin_dht)
         counter += 30
-        register_to_disk(temperature, humidity, "Working... Elapsed time: {0} seconds".format(counter))
+        register_to_disk(temperature, humidity, "Working... Elapsed time: {0} seconds".format(counter), log_level)
         time.sleep(30)
 
-    register_to_disk(temperature, humidity, "Work finished. Beginning to rest. {}".format(datetime.datetime.now()))
+    register_to_disk(temperature, humidity, "Work finished. Beginning to rest. {}".format(datetime.datetime.now()),
+                     log_level)
     GPIO.setup(pin_heater, GPIO.IN)
     if GPIO.input(pin_heater) != GPIO.HIGH:
         GPIO.setup(pin_heater, GPIO.OUT)
@@ -87,7 +91,9 @@ def work(pin_heater, work_time, sleep_time, sensor, pin_dht):
         counter += 150
         time.sleep(150)
         humidity, temperature = get_ht(sensor, pin_dht)
-        register_to_disk(temperature, humidity, "Resting... Elapsed time: {0} seconds. {1}".format(counter, datetime.datetime.now()))
+        register_to_disk(temperature, humidity,
+                         "Resting... Elapsed time: {0} seconds. {1}".format(counter, datetime.datetime.now()), log_level)
+
 
 def got_to_work(start, end):
     """
@@ -107,7 +113,8 @@ def got_to_work(start, end):
     return now_time >= start_time or now_time <= end_time
 
 
-def register_to_disk(temperature, humidity, message):
-    with open(FILE_NAME, 'a') as the_file:
-        the_file.write(message + '\n')
-        the_file.write('Temp={0:0.1f}*  Humidity={1:0.1f}%\n'.format(temperature, humidity))
+def register_to_disk(temperature, humidity, message, log_level):
+    if log_level == 'INFO':
+        with open(FILE_NAME, 'a') as the_file:
+            the_file.write(message + '\n')
+            the_file.write('Temp={0:0.1f}*  Humidity={1:0.1f}%\n'.format(temperature, humidity))
