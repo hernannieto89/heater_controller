@@ -39,6 +39,8 @@ def check_sudo():
 
 def get_ht(sensor, pin, log_level):
     tries = 0
+    humidity = 0.
+    temperature = 0.
     if log_level == 'INFO':
         try:
             humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
