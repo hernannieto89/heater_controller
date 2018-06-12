@@ -39,24 +39,25 @@ def check_sudo():
 
 def get_ht(sensor, pin, log_level):
     tries = 0
-    try:
-        humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
-        while out_of_range(humidity) or out_of_range(temperature):
-            register_to_disk(temperature, humidity, "Out of Range - Beginning try {0}".format(tries), log_level)
-            tries += 1
-            time.sleep(DELAY_INTERVAL)
+    if log_level == 'INFO':
+        try:
             humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
-            if tries > MAX_RETRIES:
-                raise Exception
-    except Exception:
-        humidity = 101.
-        temperature = 101.
-        register_to_disk(temperature, humidity, "Exception reading.", log_level)
+            while out_of_range(humidity) or out_of_range(temperature):
+                register_to_disk(temperature, humidity, "Out of Range - Beginning try {0}".format(tries), log_level)
+                tries += 1
+                time.sleep(DELAY_INTERVAL)
+                humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
+                if tries > MAX_RETRIES:
+                    raise Exception
+        except Exception:
+            humidity = 101.
+            temperature = 101.
+            register_to_disk(temperature, humidity, "Exception reading.", log_level)
     return humidity, temperature
 
 
 def out_of_range(value):
-    return value > 100
+    return value is None or value > 100
 
 
 def work(pin_heater, work_time, sleep_time, sensor, pin_dht, log_level, temperature_limit=None, humidity_limit=None):
