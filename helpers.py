@@ -114,6 +114,9 @@ def got_to_work(start, end):
 
 
 def register_to_disk(temperature, humidity, message, log_level):
+    print(log_level)
+    print(temperature)
+    print(humidity)
     if log_level == 'INFO':
         with open(FILE_NAME, 'a') as the_file:
             the_file.write(message + '\n')

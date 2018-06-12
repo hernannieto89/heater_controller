@@ -85,7 +85,7 @@ def main():
         on_time = got_to_work(start, end)
         if on_time:
             humidity, temperature = get_ht(sensor, pin_dht, log_level)
-            register_to_disk(temperature, humidity, "Before work. {}".format(datetime.datetime.now()), log_level)
+            register_to_disk(temperature=temperature, humidity=humidity, message="Before work. {}".format(datetime.datetime.now()), log_level=log_level)
             if temperature_limit and not humidity_limit:
                 if temperature < temperature_limit:
                     work(pin_heater=pin_heater,
