@@ -39,22 +39,19 @@ def check_sudo():
 
 def get_ht(sensor, pin, log_level):
     tries = 0
-    humidity = 0.
-    temperature = 0.
-    if log_level == 'INFO':
-        try:
+    try:
+        humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
+        while out_of_range(humidity) or out_of_range(temperature):
+            register_to_disk(temperature, humidity, "Out of Range - Beginning try {0}".format(tries), log_level)
+            tries += 1
+            time.sleep(DELAY_INTERVAL)
             humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
-            while out_of_range(humidity) or out_of_range(temperature):
-                register_to_disk(temperature, humidity, "Out of Range - Beginning try {0}".format(tries), log_level)
-                tries += 1
-                time.sleep(DELAY_INTERVAL)
-                humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
-                if tries > MAX_RETRIES:
-                    raise Exception
-        except Exception:
-            humidity = 101.
-            temperature = 101.
-            register_to_disk(temperature, humidity, "Exception reading.", log_level)
+            if tries > MAX_RETRIES:
+                raise Exception
+    except Exception:
+        humidity = 51.
+        temperature = 101.
+        register_to_disk(temperature, humidity, "Exception reading.", log_level)
     return humidity, temperature
 
 
@@ -117,9 +114,6 @@ def got_to_work(start, end):
 
 
 def register_to_disk(temperature, humidity, message, log_level):
-    print(log_level)
-    print(temperature)
-    print(humidity)
     if log_level == 'INFO':
         with open(FILE_NAME, 'a') as the_file:
             the_file.write(message + '\n')
