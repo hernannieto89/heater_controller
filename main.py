@@ -95,7 +95,7 @@ def main():
                          log_level=log_level,
                          temperature_limit=temperature_limit)
             if humidity_limit:
-                if humidity < humidity_limit:
+                if humidity > humidity_limit:
                     work(pin_heater=pin_heater,
                          work_time=work_time,
                          sleep_time=sleep_time,
