@@ -67,14 +67,14 @@ def work(pin_heater, work_time, sleep_time, sensor, pin_dht, log_level, temperat
         GPIO.setup(pin_heater, GPIO.OUT)
         GPIO.output(pin_heater, GPIO.LOW)
 
-    humidity, temperature = get_ht(sensor, pin_dht)
+    humidity, temperature = get_ht(sensor, pin_dht, log_level)
     register_to_disk(temperature, humidity, "Beginning to work.", log_level)
     while counter < work_time:
         if temperature_limit and temperature > temperature_limit:
             break
         elif humidity_limit and humidity > humidity_limit:
             break
-        humidity, temperature = get_ht(sensor, pin_dht)
+        humidity, temperature = get_ht(sensor, pin_dht, log_level)
         counter += 30
         register_to_disk(temperature, humidity, "Working... Elapsed time: {0} seconds".format(counter), log_level)
         time.sleep(30)
@@ -90,7 +90,7 @@ def work(pin_heater, work_time, sleep_time, sensor, pin_dht, log_level, temperat
     while counter < sleep_time:
         counter += 150
         time.sleep(150)
-        humidity, temperature = get_ht(sensor, pin_dht)
+        humidity, temperature = get_ht(sensor, pin_dht, log_level)
         register_to_disk(temperature, humidity,
                          "Resting... Elapsed time: {0} seconds. {1}".format(counter, datetime.datetime.now()), log_level)
 
